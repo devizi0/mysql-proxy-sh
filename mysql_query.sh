@@ -33,6 +33,7 @@ case "$1" in
       exit 1
     fi
     ENV_FILE="$SCRIPT_DIR/envs/ai-do-not-read-${CONFIG}.env"
+    mkdir -p "$SCRIPT_DIR/envs"
     if [[ -f "$ENV_FILE" ]]; then
       echo "[ERROR] 이미 존재합니다: ai-do-not-read-${CONFIG}.env" >&2
       exit 1
