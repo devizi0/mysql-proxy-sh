@@ -1,62 +1,26 @@
 # mysql-proxy-sh
 
-A shell-based MySQL proxy that lets AI agents execute queries **without ever seeing credentials**.
+AI한테 MySQL 접근권을 주고 싶은데 크레덴셜은 주기 싫을 때 쓰는 스크립트.
 
-## Concept
+`.env`에 DB 접속 정보를 저장해두면, AI는 그 파일을 못 읽고 쿼리랑 결과만 주고받을 수 있음. 구조는 단순하게 shell script 하나임.
 
-AI agents (like Claude) need database access to be useful — but handing them raw credentials is a security risk. This script acts as a thin proxy: the agent calls the script with a SQL query, the script loads credentials from a local `.env` file that the AI cannot read, and only the query result is returned.
+## 설치
 
-```
-AI Agent  -->  mysql_query.sh  -->  .env (AI cannot read)  -->  MySQL DB
-              (only sees SQL          (credentials stay
-               and results)            on your machine)
-```
-
-## Usage
+mysql-client 필요함.
 
 ```bash
-# Default config (envs/ai-do-not-read-default.env)
-~/agent/mysql-proxy/mysql_query.sh "SHOW DATABASES;"
-
-# Specific config
-~/agent/mysql-proxy/mysql_query.sh -c <config-name> "SQL" [database]
+brew install mysql-client  # macOS
+sudo apt install mysql-client  # Ubuntu
 ```
 
-## Examples
+## 설정
 
 ```bash
-# List databases
-~/agent/mysql-proxy/mysql_query.sh "SHOW DATABASES;"
+# 대화형으로 추가
+./add_env.sh <설정명>
 
-# List tables
-~/agent/mysql-proxy/mysql_query.sh "SHOW TABLES;" mydb
-
-# Query data
-~/agent/mysql-proxy/mysql_query.sh "SELECT * FROM users LIMIT 10;" mydb
-
-# Use a different config
-~/agent/mysql-proxy/mysql_query.sh -c prod "SELECT count(*) FROM orders;" mydb
-```
-
-## Setup
-
-### 1. Install mysql-client
-
-```bash
-# macOS
-brew install mysql-client
-
-# Ubuntu/Debian
-sudo apt install mysql-client
-```
-
-### 2. Add credentials
-
-```bash
-# Interactive setup
-./add_env.sh <config-name>
-
-# Or manually create envs/ai-do-not-read-<config-name>.env
+# 또는 직접 파일 생성
+# envs/ai-do-not-read-<설정명>.env
 DB_HOST=your-host.rds.amazonaws.com
 DB_PORT=3306
 DB_USER=username
@@ -64,42 +28,19 @@ DB_PASSWORD=password
 DB_NAME=database
 ```
 
-### 3. Run
+## 사용법
 
 ```bash
-chmod +x mysql_query.sh
-./mysql_query.sh "SELECT 1;"
+# 기본
+./mysql_query.sh "SHOW DATABASES;"
+
+# DB 지정
+./mysql_query.sh "SELECT * FROM users LIMIT 10;" mydb
+
+# 설정 선택
+./mysql_query.sh -c prod "SELECT count(*) FROM orders;" mydb
 ```
 
-## File Structure
+## 보안
 
-```
-mysql-proxy/
-├── envs/
-│   ├── ai-do-not-read-default.env    # credentials (git ignored)
-│   └── ai-do-not-read-<name>.env     # additional configs
-├── mysql_query.sh                     # main script
-├── add_env.sh                         # interactive credential setup
-├── .env.example                       # example env format
-└── .gitignore                         # excludes envs/*.env
-```
-
-## Security
-
-- `envs/*.env` files are **git ignored** — credentials never leave your machine
-- File permissions are set to `600` (owner read/write only) automatically
-- SSL is enforced (`--ssl-mode=REQUIRED`)
-- The AI only sees SQL queries and their results — never credentials
-
-## Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-c <name>` | Use `envs/ai-do-not-read-<name>.env` | `default` |
-| `"SQL"` | SQL query to execute (required) | - |
-| `[database]` | Database to connect to | value in `.env` |
-
-## Requirements
-
-- zsh
-- mysql-client (auto-detected via `command -v mysql`)
+`envs/*.env`는 `.gitignore`에 등록되어 있어서 커밋 안 됨. SSL 강제 적용.
