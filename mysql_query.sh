@@ -8,6 +8,22 @@ SCRIPT_DIR="${0:A:h}"
 MYSQL="$(command -v mysql 2>/dev/null || echo /opt/homebrew/opt/mysql-client/bin/mysql)"
 CONFIG="default"
 
+if [[ $# -eq 0 ]]; then
+  echo "Usage:"
+  echo "  $0 [-c <config>] \"SQL\" [database]"
+  echo ""
+  echo "Subcommands:"
+  echo "  $0 add <config>     — add a new DB config (interactive)"
+  echo "  $0 remove <config>  — remove a DB config"
+  echo "  $0 list             — list available configs"
+  echo ""
+  echo "Examples:"
+  echo "  $0 \"SHOW DATABASES;\""
+  echo "  $0 \"SELECT * FROM users LIMIT 10;\" mydb"
+  echo "  $0 -c prod \"SELECT count(*) FROM orders;\" mydb"
+  exit 0
+fi
+
 # 서브커맨드 처리
 case "$1" in
   add)
@@ -98,14 +114,19 @@ SQL="${1:-}"
 DB="${2:-${DB_NAME:-}}"
 
 if [[ -z "$SQL" ]]; then
-  echo "[ERROR] 쿼리를 인수로 전달하세요." >&2
-  echo "사용법: $0 [-c 설정명] \"SQL\" [데이터베이스명]" >&2
-  echo "" >&2
-  echo "서브커맨드:" >&2
-  echo "  $0 add <설정명>     — 새 DB 설정 추가" >&2
-  echo "  $0 remove <설정명>  — DB 설정 삭제" >&2
-  echo "  $0 list             — 설정 목록 출력" >&2
-  exit 1
+  echo "Usage:"
+  echo "  $0 [-c <config>] \"SQL\" [database]"
+  echo ""
+  echo "Subcommands:"
+  echo "  $0 add <config>     — add a new DB config (interactive)"
+  echo "  $0 remove <config>  — remove a DB config"
+  echo "  $0 list             — list available configs"
+  echo ""
+  echo "Examples:"
+  echo "  $0 \"SHOW DATABASES;\""
+  echo "  $0 \"SELECT * FROM users LIMIT 10;\" mydb"
+  echo "  $0 -c prod \"SELECT count(*) FROM orders;\" mydb"
+  exit 0
 fi
 
 ARGS=(
