@@ -1,14 +1,63 @@
 #!/usr/bin/env zsh
 # 사용법: ./mysql_query.sh [-c 설정명] "SQL 쿼리" [데이터베이스명]
-#   -c 설정명  envs/<설정명>.env 사용 (기본값: default)
-# 예시:
-#   ./mysql_query.sh "SHOW DATABASES;"
-#   ./mysql_query.sh -c prod "SELECT * FROM tbl_esim_orders LIMIT 5;" prod_zerotravel_esim
-#   ./mysql_query.sh -c stag "SHOW TABLES;" stag_zerotravel
+#         ./mysql_query.sh add <설정명>
+#         ./mysql_query.sh remove <설정명>
+#         ./mysql_query.sh list
 
 SCRIPT_DIR="${0:A:h}"
 MYSQL="$(command -v mysql 2>/dev/null || echo /opt/homebrew/opt/mysql-client/bin/mysql)"
 CONFIG="default"
+
+# 서브커맨드 처리
+case "$1" in
+  add)
+    CONFIG="$2"
+    if [[ -z "$CONFIG" ]]; then
+      echo "[ERROR] 설정명을 입력하세요. 사용법: $0 add <설정명>" >&2
+      exit 1
+    fi
+    ENV_FILE="$SCRIPT_DIR/envs/ai-do-not-read-${CONFIG}.env"
+    if [[ -f "$ENV_FILE" ]]; then
+      echo "[ERROR] 이미 존재합니다: ai-do-not-read-${CONFIG}.env" >&2
+      exit 1
+    fi
+    echo -n "DB_HOST: "; read DB_HOST
+    echo -n "DB_PORT (default 3306): "; read DB_PORT
+    echo -n "DB_USER: "; read DB_USER
+    echo -n "DB_PASSWORD: "; read -s DB_PASSWORD; echo
+    echo -n "DB_NAME (optional, enter to skip): "; read DB_NAME
+    cat > "$ENV_FILE" <<EOF
+DB_HOST=${DB_HOST}
+DB_PORT=${DB_PORT:-3306}
+DB_USER=${DB_USER}
+DB_PASSWORD=${DB_PASSWORD}
+EOF
+    [[ -n "$DB_NAME" ]] && echo "DB_NAME=${DB_NAME}" >> "$ENV_FILE"
+    chmod 600 "$ENV_FILE"
+    echo "[done] created: ai-do-not-read-${CONFIG}.env"
+    exit 0
+    ;;
+  remove)
+    CONFIG="$2"
+    if [[ -z "$CONFIG" ]]; then
+      echo "[ERROR] 설정명을 입력하세요. 사용법: $0 remove <설정명>" >&2
+      exit 1
+    fi
+    ENV_FILE="$SCRIPT_DIR/envs/ai-do-not-read-${CONFIG}.env"
+    if [[ ! -f "$ENV_FILE" ]]; then
+      echo "[ERROR] 존재하지 않습니다: ai-do-not-read-${CONFIG}.env" >&2
+      exit 1
+    fi
+    rm "$ENV_FILE"
+    echo "[done] removed: ai-do-not-read-${CONFIG}.env"
+    exit 0
+    ;;
+  list)
+    echo "available configs:"
+    ls "$SCRIPT_DIR/envs/" 2>/dev/null | sed 's/ai-do-not-read-//' | sed 's/\.env$//' | sed 's/^/  /'
+    exit 0
+    ;;
+esac
 
 # -c 옵션 파싱
 while [[ $# -gt 0 ]]; do
@@ -52,8 +101,10 @@ if [[ -z "$SQL" ]]; then
   echo "[ERROR] 쿼리를 인수로 전달하세요." >&2
   echo "사용법: $0 [-c 설정명] \"SQL\" [데이터베이스명]" >&2
   echo "" >&2
-  echo "사용 가능한 설정:" >&2
-  ls "$SCRIPT_DIR/envs/" 2>/dev/null | sed 's/\.env$//' | sed 's/^/  /' >&2
+  echo "서브커맨드:" >&2
+  echo "  $0 add <설정명>     — 새 DB 설정 추가" >&2
+  echo "  $0 remove <설정명>  — DB 설정 삭제" >&2
+  echo "  $0 list             — 설정 목록 출력" >&2
   exit 1
 fi
 

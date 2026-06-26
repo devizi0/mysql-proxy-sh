@@ -15,21 +15,15 @@ sudo apt install mysql-client    # Ubuntu
 
 ## Managing configs
 
-**Add a config** (interactive, asks for host/port/user/password):
 ```bash
-./add_env.sh <name>
-# e.g.
-./add_env.sh prod
-```
+# add a new config (interactive)
+./mysql_query.sh add <name>
 
-**List configs:**
-```bash
-ls envs/
-```
+# list all configs
+./mysql_query.sh list
 
-**Remove a config:**
-```bash
-rm envs/ai-do-not-read-<name>.env
+# remove a config
+./mysql_query.sh remove <name>
 ```
 
 Or create the file manually at `envs/ai-do-not-read-<name>.env`:
