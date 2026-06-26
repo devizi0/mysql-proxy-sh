@@ -13,14 +13,27 @@ brew install mysql-client        # macOS
 sudo apt install mysql-client    # Ubuntu
 ```
 
-## Setup
+## Managing configs
 
+**Add a config** (interactive, asks for host/port/user/password):
 ```bash
-# interactive
 ./add_env.sh <name>
+# e.g.
+./add_env.sh prod
+```
 
-# or just create the file manually
-# envs/ai-do-not-read-<name>.env
+**List configs:**
+```bash
+ls envs/
+```
+
+**Remove a config:**
+```bash
+rm envs/ai-do-not-read-<name>.env
+```
+
+Or create the file manually at `envs/ai-do-not-read-<name>.env`:
+```
 DB_HOST=your-host.rds.amazonaws.com
 DB_PORT=3306
 DB_USER=username
@@ -31,10 +44,13 @@ DB_NAME=database
 ## Usage
 
 ```bash
+# default config
 ./mysql_query.sh "SHOW DATABASES;"
 
+# specify database
 ./mysql_query.sh "SELECT * FROM users LIMIT 10;" mydb
 
+# use a specific config
 ./mysql_query.sh -c prod "SELECT count(*) FROM orders;" mydb
 ```
 
